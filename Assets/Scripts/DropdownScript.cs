@@ -4,21 +4,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-struct Pair<T, U>{
-
-    public T x;
-    public U y;
-
-    public Pair(T x, U y){
-        this.x  = x;
-        this.y = y;
-    }
-
-}
-
 public class DropdownScript : MonoBehaviour
 {
-    List<Pair<float, float>> liquids = new List<Pair<float, float>>();
+    public List<Vector3> liquids = new List<Vector3>(); //TODO: przeniesc do innego miejsca
     [SerializeField] private TMP_Dropdown dropdown;
  
     [SerializeField] private TextMeshProUGUI density;
@@ -30,9 +18,9 @@ public class DropdownScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        liquids.Add(new Pair<float, float>(1.2f, 713.0f));
-        liquids.Add(new Pair<float, float>(700.0f, 2000.0f));
-        liquids.Add(new Pair<float, float>(995.0f, 4200.0f));
+        liquids.Add(new Vector3(1.2f, 713.0f, 0.00002f));
+        liquids.Add(new Vector3(700.0f, 2000.0f, 0.1f));
+        liquids.Add(new Vector3(995.0f, 4200.0f, 0.001f));
         data = FindObjectOfType<DataCollector>();
         dropdown.onValueChanged.AddListener((v) => {
             Debug.Log(v);

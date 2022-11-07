@@ -6,31 +6,42 @@ using TMPro;
 
 public class DataCollector : MonoBehaviour
 {
-    public TextMeshProUGUI Tci_t;
-    private float Tci;
-    public TextMeshProUGUI Thi_t;
-    private float Thi;
+    private const int SEGMENTS = 100;
+
+    private const float P = Mathf.PI * 0.1f;
+
+    //Reynolds number
+    private const int Re = 2000;
+    public List<Vector3> liquids = new List<Vector3>(); //TODO: DRY
+    List<float> tco = new List<float>();
+    List<float> tho = new List<float>();
+    public TextMeshProUGUI tci_t;
+    private float _tci;
+    public TextMeshProUGUI thi_t;
+    private float _thi;
     public TextMeshProUGUI dc_t;
-    private float dc;
+    private float _dc;
     public TextMeshProUGUI dh_t;
-    private float dh;
+    private float _dh;
     public TextMeshProUGUI cc_t;
-    private float cc;
+    private float _cc;
     public TextMeshProUGUI ch_t;
-    private float ch;
+    private float _ch;
     public TextMeshProUGUI l_t;
-    private float length;
+    private float _length;
     public TextMeshProUGUI r_t;
-    private float radius;
+    private float _radius;
     public TextMeshProUGUI U_t;
-    private float U;
+    private float _U;
     public Toggle cf_t;
-    private bool counterflow;
+    private bool _counterflow;
 
     // Start is called before the first frame update
     void Start()
     {
-        
+        liquids.Add(new Vector3(1.2f, 713.0f, 0.00002f));
+        liquids.Add(new Vector3(700.0f, 2000.0f, 0.1f));
+        liquids.Add(new Vector3(995.0f, 4200.0f, 0.001f));
     }
 
     // Update is called once per frame
@@ -43,16 +54,86 @@ public class DataCollector : MonoBehaviour
 
         Debug.Log("Collecting data");
 
-        Tci = float.Parse(Tci_t.text);
-        Thi = float.Parse(Thi_t.text);
-        dc = float.Parse(dc_t.text);
-        dh = float.Parse(dh_t.text);
-        cc = float.Parse(cc_t.text);
-        ch = float.Parse(ch_t.text);
-        length = float.Parse(l_t.text);
-        radius = float.Parse(r_t.text);
-        U = float.Parse(U_t.text);
-        counterflow = cf_t.isOn;
+        _tci = float.Parse(tci_t.text);
+        _thi = float.Parse(thi_t.text);
+        _dc = float.Parse(dc_t.text);
+        _dh = float.Parse(dh_t.text);
+        _cc = float.Parse(cc_t.text);
+        _ch = float.Parse(ch_t.text);
+        _length = float.Parse(l_t.text);
+        _radius = float.Parse(r_t.text);
+        _U = float.Parse(U_t.text);
+        _counterflow = cf_t.isOn;
+
+    }
+
+    public void Calculate() {
+
+        Collect();
+
+        tco.Clear();
+        tho.Clear();
+
+        //calculate speed based on Reynolds number (<2000 for laminar flow)
+        float vc = (Re * liquids[get_liquid(_dc)].z) / (_dc * (_radius * 2));
+        float vh = (Re * liquids[get_liquid(_dh)].z) / (_dh * (_radius * 2));
+
+        //calculate cross-sectional area of the pipe
+        float S = Mathf.PI * _radius * _radius;
+
+        //calculate heat capacity rate of both fluids
+        float Cc = _cc * _dc * vc * S;
+        float Ch = _ch * _dh * vh * S;
+
+        //calculate deltas
+        float delta_c = P * _U / Cc;
+        float delta_h = P * _U / Ch;
+
+        if(!_counterflow) {
+
+            float C1p = delta_c * (_tci - _thi);
+            float C2p = (_tci*delta_h + _thi*delta_c)/(delta_c + delta_h);
+
+            Debug.Log(C1p);
+            Debug.Log(C2p);
+
+            for(float i = 0; i < SEGMENTS; i++) {
+
+                Debug.Log(((C1p*Mathf.Exp(-(i/SEGMENTS * _length)*(delta_h + delta_c)))/(delta_c + delta_h)) + C2p);
+
+                tco.Add(((C1p*Mathf.Exp(-(i/SEGMENTS * _length)*(delta_h + delta_c)))/(delta_c + delta_h)) + C2p);
+
+                tho.Add((-C1p*Mathf.Exp(-(i/SEGMENTS * _length)*(delta_h + delta_c))*delta_h/(delta_c*(delta_c + delta_h))) + C2p);
+
+            }
+
+        } else {
+
+            float C1c = (delta_c*(delta_c - delta_h)*(_thi - _tci))/(delta_h - delta_c*Mathf.Exp(-_length*(delta_h - delta_c)));
+            float C2c = (_tci*delta_h - _thi*delta_c*Mathf.Exp(-_length*(delta_h - delta_c)))/(delta_h - delta_c*Mathf.Exp(-_length*(delta_h - delta_c)));
+
+            for(int i = 0; i < SEGMENTS; i++) {
+
+                tco.Add((C1c*Mathf.Exp(-(i * _length)*(delta_h - delta_c))/(delta_c - delta_h)) + C2c);
+                tho.Add(((C1c*Mathf.Exp(-(i * _length)*(delta_h - delta_c))*delta_h)/(delta_c*(delta_c - delta_h))) + C2c);
+
+            }
+
+        }
+
+        //Debug.Log(tco[1]);
+        //Debug.Log(tho[1]);
+
+    }
+
+    private int get_liquid(float density) { //TODO: tmp, usunac ze zmiana listy 'liquids'
+
+        for(int i = 0; i < 3; i++){
+            if(liquids[i].x == density)
+            return i;
+        }
+
+        return -1;
 
     }
 }
