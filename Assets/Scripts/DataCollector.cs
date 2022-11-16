@@ -39,7 +39,7 @@ public class DataCollector : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        liquids.Add(new Vector3(1.2f, 713.0f, 0.00002f));
+        liquids.Add(new Vector3(1200.00f, 2400.00f, 1.0f));
         liquids.Add(new Vector3(700.0f, 2000.0f, 0.1f));
         liquids.Add(new Vector3(995.0f, 4200.0f, 0.001f));
     }
@@ -87,19 +87,14 @@ public class DataCollector : MonoBehaviour
 
         //calculate deltas
         float delta_c = P * _U / Cc;
-        float delta_h = P * _U / Ch;
+        float delta_h = (P + 0.001f) * _U / Ch;
 
         if(!_counterflow) {
 
             float C1p = delta_c * (_tci - _thi);
             float C2p = (_tci*delta_h + _thi*delta_c)/(delta_c + delta_h);
 
-            Debug.Log(C1p);
-            Debug.Log(C2p);
-
             for(float i = 0; i < SEGMENTS; i++) {
-
-                Debug.Log(((C1p*Mathf.Exp(-(i/SEGMENTS * _length)*(delta_h + delta_c)))/(delta_c + delta_h)) + C2p);
 
                 tco.Add(((C1p*Mathf.Exp(-(i/SEGMENTS * _length)*(delta_h + delta_c)))/(delta_c + delta_h)) + C2p);
 
@@ -112,17 +107,25 @@ public class DataCollector : MonoBehaviour
             float C1c = (delta_c*(delta_c - delta_h)*(_thi - _tci))/(delta_h - delta_c*Mathf.Exp(-_length*(delta_h - delta_c)));
             float C2c = (_tci*delta_h - _thi*delta_c*Mathf.Exp(-_length*(delta_h - delta_c)))/(delta_h - delta_c*Mathf.Exp(-_length*(delta_h - delta_c)));
 
-            for(int i = 0; i < SEGMENTS; i++) {
+            Debug.Log(C1c);
+            Debug.Log(C2c);
 
-                tco.Add((C1c*Mathf.Exp(-(i * _length)*(delta_h - delta_c))/(delta_c - delta_h)) + C2c);
-                tho.Add(((C1c*Mathf.Exp(-(i * _length)*(delta_h - delta_c))*delta_h)/(delta_c*(delta_c - delta_h))) + C2c);
+            for(float i = 0; i < SEGMENTS; i++) {
+
+                tco.Add((C1c*Mathf.Exp(-(i/SEGMENTS * _length)*(delta_h - delta_c))/(delta_c - delta_h)) + C2c);
+
+                tho.Add(((C1c*Mathf.Exp(-(i/SEGMENTS * _length)*(delta_h - delta_c))*delta_h)/(delta_c*(delta_c - delta_h))) + C2c);
 
             }
 
         }
 
-        //Debug.Log(tco[1]);
-        //Debug.Log(tho[1]);
+        int j = 0;
+
+        foreach(float temperature in tco) {
+            Debug.Log(j.ToString() + " " + temperature.ToString());
+            j++;
+        }
 
     }
 
