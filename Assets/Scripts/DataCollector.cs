@@ -133,9 +133,12 @@ public class DataCollector : MonoBehaviour
 
         for(int i = 0; i < 100; i++) {
 
-            Color customColor = new Color(1 - ((float)i)/100, 0.0f, ((float)i)/100, 1.0f);
-            Debug.Log(((float)i)/100);
+            Color customColor = new Color((tho[i]/100), 0.0f, 0.0f, 1.0f);
+            Debug.Log((tho[i]/100));
             hotCylinders[i].GetComponent<Renderer>().material.SetColor("_Color", customColor);
+
+            //customColor = new Color((tco[i]/1000), 0.0f, 1 - (tco[i]/1000), 1.0f);
+            //coldCylinders[i].GetComponent<Renderer>().material.SetColor("_Color", customColor);
 
 
         }
