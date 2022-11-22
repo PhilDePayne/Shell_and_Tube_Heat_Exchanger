@@ -6,6 +6,9 @@ using TMPro;
 
 public class DataCollector : MonoBehaviour
 {
+
+    private List<GameObject> hotCylinders = new List<GameObject>();
+    private List<GameObject> coldCylinders = new List<GameObject>();
     private const int SEGMENTS = 100;
 
     private const float P = Mathf.PI * 0.1f;
@@ -42,6 +45,7 @@ public class DataCollector : MonoBehaviour
         liquids.Add(new Vector3(1200.00f, 2400.00f, 1.0f));
         liquids.Add(new Vector3(700.0f, 2000.0f, 0.1f));
         liquids.Add(new Vector3(995.0f, 4200.0f, 0.001f));
+        SpawnCylinders();
     }
 
     // Update is called once per frame
@@ -127,6 +131,15 @@ public class DataCollector : MonoBehaviour
             j++;
         }
 
+        for(int i = 0; i < 100; i++) {
+
+            Color customColor = new Color(1 - ((float)i)/100, 0.0f, ((float)i)/100, 1.0f);
+            Debug.Log(((float)i)/100);
+            hotCylinders[i].GetComponent<Renderer>().material.SetColor("_Color", customColor);
+
+
+        }
+
     }
 
     private int get_liquid(float density) { //TODO: tmp, usunac ze zmiana listy 'liquids'
@@ -137,6 +150,27 @@ public class DataCollector : MonoBehaviour
         }
 
         return -1;
+
+    }
+
+    private void SpawnCylinders() {
+
+        for(int i = 0; i < 100; i++) {
+
+            GameObject cylinder = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            cylinder.transform.localScale = new Vector3(21.0f, 1.05f, 21.0f);
+            cylinder.transform.position = new Vector3(280.0f + (float)i * 2, 170.0f, -27.0f);
+            cylinder.transform.rotation = Quaternion.Euler(0.0f, 0.0f, 90.0f);
+            hotCylinders.Add(cylinder);
+
+            cylinder = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            cylinder.gameObject.GetComponent<Renderer>().material.SetColor("_Color", Color.black);
+            cylinder.transform.localScale = new Vector3(74.0f, 1.05f, 100.0f);
+            cylinder.transform.position = new Vector3(280.0f + (float)i * 2, 170.0f, 17.0f);
+            cylinder.transform.rotation = Quaternion.Euler(0.0f, 0.0f, 90.0f);
+            coldCylinders.Add(cylinder);
+
+        }
 
     }
 }
