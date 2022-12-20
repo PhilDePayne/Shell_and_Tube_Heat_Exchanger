@@ -18,7 +18,7 @@ public class DropdownScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        liquids.Add(new Vector3(1.2f, 713.0f, 0.00002f));
+        liquids.Add(new Vector3(1200.00f, 2400.00f, 1.0f));
         liquids.Add(new Vector3(700.0f, 2000.0f, 0.1f));
         liquids.Add(new Vector3(995.0f, 4200.0f, 0.001f));
         data = FindObjectOfType<DataCollector>();

@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.IO;
+using System.Text;
 
 public class DataCollector : MonoBehaviour
 {
+    FileStream fs;
 
     private List<GameObject> hotCylinders = new List<GameObject>();
     private List<GameObject> coldCylinders = new List<GameObject>();
@@ -18,6 +21,8 @@ public class DataCollector : MonoBehaviour
     public List<Vector3> liquids = new List<Vector3>(); //TODO: DRY
     List<float> tco = new List<float>();
     List<float> tho = new List<float>();
+
+    //=== UI DATA ===//
     public TextMeshProUGUI tci_t;
     private float _tci;
     public TextMeshProUGUI thi_t;
@@ -46,6 +51,8 @@ public class DataCollector : MonoBehaviour
         liquids.Add(new Vector3(700.0f, 2000.0f, 0.1f));
         liquids.Add(new Vector3(995.0f, 4200.0f, 0.001f));
         SpawnCylinders();
+
+        fs = File.Open("D:\\data.txt", FileMode.Create, FileAccess.Write);
     }
 
     // Update is called once per frame
@@ -55,8 +62,6 @@ public class DataCollector : MonoBehaviour
     }
 
     public void Collect(){
-
-        Debug.Log("Collecting data");
 
         _tci = float.Parse(tci_t.text);
         _thi = float.Parse(thi_t.text);
@@ -79,8 +84,8 @@ public class DataCollector : MonoBehaviour
         tho.Clear();
 
         //calculate speed based on Reynolds number (<2000 for laminar flow)
-        float vc = (Re * liquids[get_liquid(_dc)].z) / (_dc * (_radius * 2));
-        float vh = (Re * liquids[get_liquid(_dh)].z) / (_dh * (_radius * 2));
+        float vc = (Re * liquids[get_liquid(_dc)].z) / (_dc * (0.1f * 2));
+        float vh = (Re * liquids[get_liquid(_dh)].z) / (_dh * (0.1f * 2));
 
         //calculate cross-sectional area of the pipe
         float S = Mathf.PI * _radius * _radius;
@@ -89,9 +94,12 @@ public class DataCollector : MonoBehaviour
         float Cc = _cc * _dc * vc * S;
         float Ch = _ch * _dh * vh * S;
 
+        Debug.Log(Cc);
+        Debug.Log(Ch);
+
         //calculate deltas
         float delta_c = P * _U / Cc;
-        float delta_h = (P + 0.001f) * _U / Ch;
+        float delta_h = (P + 0.1f) * _U / Ch;
 
         if(!_counterflow) {
 
@@ -100,9 +108,9 @@ public class DataCollector : MonoBehaviour
 
             for(float i = 0; i < SEGMENTS; i++) {
 
-                tco.Add(((C1p*Mathf.Exp(-(i/SEGMENTS * _length)*(delta_h + delta_c)))/(delta_c + delta_h)) + C2p);
+                tco.Add(((C1p*Mathf.Exp(-(i/SEGMENTS * _length/2)*(delta_h + delta_c)))/(delta_c + delta_h)) + C2p);
 
-                tho.Add((-C1p*Mathf.Exp(-(i/SEGMENTS * _length)*(delta_h + delta_c))*delta_h/(delta_c*(delta_c + delta_h))) + C2p);
+                tho.Add((-C1p*Mathf.Exp(-(i/SEGMENTS * _length/2)*(delta_h + delta_c))*delta_h/(delta_c*(delta_c + delta_h))) + C2p);
 
             }
 
@@ -111,14 +119,11 @@ public class DataCollector : MonoBehaviour
             float C1c = (delta_c*(delta_c - delta_h)*(_thi - _tci))/(delta_h - delta_c*Mathf.Exp(-_length*(delta_h - delta_c)));
             float C2c = (_tci*delta_h - _thi*delta_c*Mathf.Exp(-_length*(delta_h - delta_c)))/(delta_h - delta_c*Mathf.Exp(-_length*(delta_h - delta_c)));
 
-            Debug.Log(C1c);
-            Debug.Log(C2c);
-
             for(float i = 0; i < SEGMENTS; i++) {
 
-                tco.Add((C1c*Mathf.Exp(-(i/SEGMENTS * _length)*(delta_h - delta_c))/(delta_c - delta_h)) + C2c);
+                tco.Add((C1c*Mathf.Exp(-(i/SEGMENTS * _length/2)*(delta_h - delta_c))/(delta_c - delta_h)) + C2c);
 
-                tho.Add(((C1c*Mathf.Exp(-(i/SEGMENTS * _length)*(delta_h - delta_c))*delta_h)/(delta_c*(delta_c - delta_h))) + C2c);
+                tho.Add(((C1c*Mathf.Exp(-(i/SEGMENTS * _length/2)*(delta_h - delta_c))*delta_h)/(delta_c*(delta_c - delta_h))) + C2c);
 
             }
 
@@ -126,20 +131,39 @@ public class DataCollector : MonoBehaviour
 
         int j = 0;
 
-        foreach(float temperature in tco) {
-            Debug.Log(j.ToString() + " " + temperature.ToString());
+        foreach(float temperature in tho) {
+            byte[] info = new UTF8Encoding(true).GetBytes(temperature.ToString() + '\n');
+            fs.Write(info, 0, info.Length);
             j++;
         }
 
-        for(int i = 0; i < 100; i++) {
+        byte[] infoa = new UTF8Encoding(true).GetBytes(" " + '\n');
+            fs.Write(infoa, 0, infoa.Length);
 
-            Color customColor = new Color((tho[i]/100), 0.0f, 0.0f, 1.0f);
-            Debug.Log((tho[i]/100));
+        foreach(float temperature in tco) {
+            byte[] info = new UTF8Encoding(true).GetBytes(temperature.ToString() + '\n');
+            fs.Write(info, 0, info.Length);
+            j++;
+        }
+
+        StartCoroutine(ColorPipes());
+    }
+
+    private IEnumerator ColorPipes() {
+
+        int i = 0;
+
+        while(i < 100) {
+
+            Color customColor = new Color(2 * (tho[i]/100), 2 * (1 - (tho[i]/100)), 0.0f, 1.0f);
             hotCylinders[i].GetComponent<Renderer>().material.SetColor("_Color", customColor);
 
-            //customColor = new Color((tco[i]/1000), 0.0f, 1 - (tco[i]/1000), 1.0f);
-            //coldCylinders[i].GetComponent<Renderer>().material.SetColor("_Color", customColor);
+            customColor = new Color(2 * (tco[i]/100), 2 * (1 - (tco[i]/100)), 0.0f, 1.0f);
+            coldCylinders[i].GetComponent<Renderer>().material.SetColor("_Color", customColor);
 
+            i++;
+
+            yield return new WaitForSeconds(0.005f);
 
         }
 
@@ -175,5 +199,10 @@ public class DataCollector : MonoBehaviour
 
         }
 
+    }
+
+    void OnApplicationQuit()
+    {
+        fs.Close();
     }
 }
