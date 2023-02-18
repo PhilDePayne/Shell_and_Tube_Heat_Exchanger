@@ -2,7 +2,7 @@
 A Unity program which simulates a shell and tube heat exchanger.
 
 ## Description
-This program visualises the changes in temperatures of two fluids in a shell and sube heat exchanger.
+This program visualises the changes in temperatures of two fluids in a shell and tube heat exchanger.
 
 ## How to use
 
