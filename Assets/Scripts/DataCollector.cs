@@ -18,7 +18,6 @@ public class DataCollector : MonoBehaviour
 
     //Reynolds number
     private const int Re = 2000;
-    public List<Vector3> liquids = new List<Vector3>(); //TODO: DRY
     List<float> tco = new List<float>();
     List<float> tho = new List<float>();
 
@@ -43,16 +42,17 @@ public class DataCollector : MonoBehaviour
     private float _U;
     public Toggle cf_t;
     private bool _counterflow;
+    public TMP_Dropdown hotFluid_d;
+    private int _hotFluid;
+    public TMP_Dropdown coldFluid_d;
+    private int _coldFluid;
 
     // Start is called before the first frame update
     void Start()
     {
-        liquids.Add(new Vector3(1200.00f, 2400.00f, 1.0f));
-        liquids.Add(new Vector3(700.0f, 2000.0f, 0.1f));
-        liquids.Add(new Vector3(995.0f, 4200.0f, 0.001f));
         SpawnCylinders();
 
-        fs = File.Open("D:\\data.txt", FileMode.Create, FileAccess.Write);
+        fs = File.Open("data.txt", FileMode.Create, FileAccess.Write);
     }
 
     // Update is called once per frame
@@ -73,6 +73,8 @@ public class DataCollector : MonoBehaviour
         _radius = float.Parse(r_t.text);
         _U = float.Parse(U_t.text);
         _counterflow = cf_t.isOn;
+        _hotFluid = hotFluid_d.value;
+        _coldFluid = coldFluid_d.value;
 
     }
 
@@ -84,8 +86,8 @@ public class DataCollector : MonoBehaviour
         tho.Clear();
 
         //calculate speed based on Reynolds number (<2000 for laminar flow)
-        float vc = (Re * liquids[get_liquid(_dc)].z) / (_dc * (0.1f * 2));
-        float vh = (Re * liquids[get_liquid(_dh)].z) / (_dh * (0.1f * 2));
+        float vc = (Re * Constants.Instance.liquids[_coldFluid].z) / (_dc * (0.1f * 2));
+        float vh = (Re * Constants.Instance.liquids[_hotFluid].z) / (_dh * (0.1f * 2));
 
         //calculate cross-sectional area of the pipe
         float S = Mathf.PI * _radius * _radius;
@@ -93,9 +95,6 @@ public class DataCollector : MonoBehaviour
         //calculate heat capacity rate of both fluids
         float Cc = _cc * _dc * vc * S;
         float Ch = _ch * _dh * vh * S;
-
-        Debug.Log(Cc);
-        Debug.Log(Ch);
 
         //calculate deltas
         float delta_c = P * _U / Cc;
@@ -166,17 +165,6 @@ public class DataCollector : MonoBehaviour
             yield return new WaitForSeconds(0.005f);
 
         }
-
-    }
-
-    private int get_liquid(float density) { //TODO: tmp, usunac ze zmiana listy 'liquids'
-
-        for(int i = 0; i < 3; i++){
-            if(liquids[i].x == density)
-            return i;
-        }
-
-        return -1;
 
     }
 

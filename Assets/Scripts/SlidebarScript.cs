@@ -6,20 +6,21 @@ using TMPro;
 
 public class SlidebarScript : MonoBehaviour
 {
-    [SerializeField] private Slider slider;
+    [SerializeField] 
+    private Slider slider;
 
-    [SerializeField] private TextMeshProUGUI text;
+    [SerializeField] 
+    private TextMeshProUGUI text;
 
-    [SerializeField] private DataCollector data;
+    [SerializeField] 
+    private DataCollector data;
 
     // Start is called before the first frame update
     void Start()
     {
         data = FindObjectOfType<DataCollector>();
         slider.onValueChanged.AddListener((v)=>{
-            Debug.Log(v);
             text.text = v.ToString("0.00");
-            data.Collect();
         });
     }
 

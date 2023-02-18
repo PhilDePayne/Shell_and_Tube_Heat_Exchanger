@@ -12,14 +12,5 @@ public class ToggleScript : MonoBehaviour
     void Start()
     {
         data = FindObjectOfType<DataCollector>();
-        toggle.onValueChanged.AddListener((v) => {
-            data.Collect();
-        });
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }
