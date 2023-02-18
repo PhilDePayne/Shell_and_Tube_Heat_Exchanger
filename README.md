@@ -1,5 +1,5 @@
 # Shell and Tube Heat Exchanger
-A Unity program which simulates a shell and tube heat hxchanger.
+A Unity program which simulates a shell and tube heat exchanger.
 
 ## Description
 This program visualises the changes in temperatures of two fluids in a shell and sube heat exchanger.
